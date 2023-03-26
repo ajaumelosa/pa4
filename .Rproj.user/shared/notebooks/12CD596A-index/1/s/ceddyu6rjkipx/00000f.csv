@@ -1,0 +1,10 @@
+"0","spec(my_data_untidy)
+"
+"1","cols(
+  obs = [32mcol_double()[39m,
+  s_cog = [32mcol_double()[39m,
+  s_skewness = [32mcol_double()[39m,
+  sh_cog = [32mcol_double()[39m,
+  sh_skewness = [32mcol_double()[39m
+)
+"

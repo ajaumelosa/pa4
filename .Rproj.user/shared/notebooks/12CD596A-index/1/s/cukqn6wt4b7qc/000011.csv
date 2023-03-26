@@ -1,0 +1,6 @@
+"0","my_data_tidy <- my_data_final_1 %>%
+  select(obs, phonemes, cog_scores, skew_scores) %>%
+  write_csv(., path = ""./data_tidy.csv"")
+"
+"2","Warning: The `path` argument of `write_csv()` is deprecated as of readr 1.4.0.
+Please use the `file` argument instead."

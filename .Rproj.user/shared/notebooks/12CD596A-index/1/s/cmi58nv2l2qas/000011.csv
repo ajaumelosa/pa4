@@ -1,0 +1,23 @@
+"0","lm(formula = cog_scores ~ skew_scores, data = my_data_tidy_s_final)
+"
+"1","
+Call:
+"
+"1",""
+"1","lm(formula = cog_scores ~ skew_scores, data = my_data_tidy_s_final)"
+"1",""
+"1","
+
+"
+"1","Coefficients:
+"
+"1","(Intercept)  "
+"1","skew_scores  "
+"1","
+"
+"1","       8027  "
+"1","       3029  "
+"1","
+"
+"1","
+"

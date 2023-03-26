@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Programming Assignment 4</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Alejandro Jaume-Losa" />
+    <script src="index_files/header-attrs-2.20/header-attrs.js"></script>
+    <link href="index_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="index_files/remark-css-0.0.1/hygge.css" rel="stylesheet" />
+    <link href="index_files/remark-css-0.0.1/rutgers.css" rel="stylesheet" />
+    <link href="index_files/remark-css-0.0.1/rutgers-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Programming Assignment 4
+]
+.subtitle[
+## Data Science for Linguists
+]
+.author[
+### Alejandro Jaume-Losa
+]
+.institute[
+### Department of Spanish and Portuguese, Rutgers University
+]
+.date[
+### 2023/03/21 (updated: 2023-03-26)
+]
+
+---
+
+
+# Loaded Packages
+
+
+```r
+library(tidyverse)
+library(untidydata)
+library(ds4ling)
+library(broom)
+library(emmeans)
+library(car)
+```
+
+---
+
+# Dataset
+
+
+```r
+my_data_untidy &lt;- read_csv("./data_raw/fricatives.csv")
+```
+
+```
+## Rows: 20 Columns: 5
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## dbl (5): obs, s_cog, s_skewness, sh_cog, sh_skewness
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+```r
+spec(my_data_untidy)
+```
+
+```
+## cols(
+##   obs = col_double(),
+##   s_cog = col_double(),
+##   s_skewness = col_double(),
+##   sh_cog = col_double(),
+##   sh_skewness = col_double()
+## )
+```
+
+---
+
+# Tidy Data: Coding
+
+
+
+```r
+my_data_wide_cog &lt;- my_data_untidy %&gt;%
+  pivot_longer(., cols = c("s_cog", "sh_cog"), names_to = "cog", values_to = "cog_scores")
+ 
+my_data_wide_cog_skew &lt;- my_data_wide_cog %&gt;%
+  pivot_longer(., cols = c("s_skewness", "sh_skewness"), names_to = "skewness", values_to = "skew_scores")
+
+my_data_separated &lt;- my_data_wide_cog_skew %&gt;%
+  separate(col = cog, 
+           into = c('phonemes', 'cog', sep = "_"))
+```
+
+```
+## Warning: Expected 3 pieces. Missing pieces filled with `NA` in 80 rows [1, 2, 3, 4, 5,
+## 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...].
+```
+
+```r
+my_data_almost_separated &lt;- my_data_separated %&gt;%
+  separate(col = skewness,
+           into = c('phonemes', 'skewness', sep = "_"))
+```
+
+```
+## Warning: Expected 3 pieces. Missing pieces filled with `NA` in 80 rows [1, 2, 3, 4, 5,
+## 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...].
+```
+
+```r
+my_data_almost_final &lt;- select(my_data_almost_separated, obs, phonemes, cog_scores, skew_scores)
+
+my_data_almost_final_row_id_number &lt;- my_data_almost_final %&gt;%
+  mutate(row_number = row_number()) %&gt;%
+  relocate(row_number)
+
+my_data_final_1 &lt;- my_data_almost_final_row_id_number %&gt;%
+  slice(1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24, 25, 28, 29, 32, 33, 36, 37, 40, 41, 44, 45, 48, 49, 52, 53, 56, 57, 60, 61, 64, 65, 68, 69, 72, 73, 76, 77, 80)
+
+my_data_tidy &lt;- my_data_final_1 %&gt;%
+  select(obs, phonemes, cog_scores, skew_scores) %&gt;%
+  write_csv(., path = "./data_tidy.csv")
+```
+
+```
+## Warning: The `path` argument of `write_csv()` is deprecated as of readr 1.4.0.
+## ℹ Please use the `file` argument instead.
+```
+
+---
+
+# Tidy Data: Table
+
+
+```r
+knitr::kable(my_data_tidy)
+```
+
+
+
+| obs|phonemes | cog_scores| skew_scores|
+|---:|:--------|----------:|-----------:|
+|   1|s        |   3285.300|  -1.2152771|
+|   1|sh       |   2408.519|  -0.2480826|
+|   2|s        |   4664.371|  -1.1854471|
+|   2|sh       |   2823.398|  -0.0165260|
+|   3|s        |   4679.532|  -1.0676233|
+|   3|sh       |   2898.352|   0.1176790|
+|   4|s        |   4873.546|  -1.0610645|
+|   4|sh       |   3617.480|   0.1978253|
+|   5|s        |   4878.759|  -1.0342092|
+|   5|sh       |   3668.004|   0.2118225|
+|   6|s        |   5194.612|  -0.9485275|
+|   6|sh       |   3684.568|   0.2624012|
+|   7|s        |   5455.066|  -0.9086766|
+|   7|sh       |   3875.364|   0.3238174|
+|   8|s        |   5483.810|  -0.8775833|
+|   8|sh       |   3917.770|   0.4935192|
+|   9|s        |   5683.643|  -0.8672691|
+|   9|sh       |   3952.549|   0.5104642|
+|  10|s        |   5829.508|  -0.8593212|
+|  10|sh       |   3955.097|   0.5217609|
+|  11|s        |   5889.843|  -0.7006081|
+|  11|sh       |   3956.956|   0.5412234|
+|  12|s        |   5987.429|  -0.6923963|
+|  12|sh       |   4059.652|   0.5743664|
+|  13|s        |   6075.781|  -0.6806629|
+|  13|sh       |   4310.137|   0.5892928|
+|  14|s        |   6093.901|  -0.6251679|
+|  14|sh       |   4334.353|   0.6324074|
+|  15|s        |   6238.325|  -0.6205981|
+|  15|sh       |   4495.861|   0.7097140|
+|  16|s        |   6321.221|  -0.5760628|
+|  16|sh       |   4610.541|   0.7665051|
+|  17|s        |   6443.836|  -0.5510135|
+|  17|sh       |   4625.709|   0.7996905|
+|  18|s        |   6624.931|  -0.5116123|
+|  18|sh       |   4735.182|   1.1255330|
+|  19|s        |   7011.781|  -0.3184417|
+|  19|sh       |   4880.020|   1.4224969|
+|  20|s        |   7095.281|  -0.1268600|
+|  20|sh       |   5086.944|   1.5186795|
+
+
+---
+
+# Descriptive Statistics
+
+
+```r
+summary(my_data_tidy)
+```
+
+```
+##       obs          phonemes           cog_scores    skew_scores     
+##  Min.   : 1.00   Length:40          Min.   :2409   Min.   :-1.2153  
+##  1st Qu.: 5.75   Class :character   1st Qu.:3954   1st Qu.:-0.7403  
+##  Median :10.50   Mode  :character   Median :4707   Median :-0.1875  
+##  Mean   :10.50                      Mean   :4843   Mean   :-0.1093  
+##  3rd Qu.:15.25                      3rd Qu.:5845   3rd Qu.: 0.5266  
+##  Max.   :20.00                      Max.   :7095   Max.   : 1.5187
+```
+
+```r
+my_data_tidy %&gt;%
+  group_by(., phonemes) %&gt;%
+  summarize(., mean_cog_scores = mean(cog_scores), sd_cog_scores = sd(cog_scores))
+```
+
+```
+## # A tibble: 2 × 3
+##   phonemes mean_cog_scores sd_cog_scores
+##   &lt;chr&gt;              &lt;dbl&gt;         &lt;dbl&gt;
+## 1 s                  5691.          913.
+## 2 sh                 3995.          697.
+```
+
+```r
+my_data_tidy %&gt;%
+  group_by(., phonemes) %&gt;%
+  summarize(., mean_skew_scores = mean(skew_scores), sd_skew_scores = sd(skew_scores))
+```
+
+```
+## # A tibble: 2 × 3
+##   phonemes mean_skew_scores sd_skew_scores
+##   &lt;chr&gt;               &lt;dbl&gt;          &lt;dbl&gt;
+## 1 s                  -0.771          0.283
+## 2 sh                  0.553          0.441
+```
+
+
+---
+
+# Boxplot of Center of Gravity as a function of phonemes
+
+```r
+my_data_tidy %&gt;%
+  ggplot(aes(x = phonemes, y = cog_scores)) +
+           geom_boxplot()
+```
+
+![](index_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
+
+---
+
+# Boxplot of Skewness as a function of phonemes
+
+
+```r
+my_data_tidy %&gt;%
+  ggplot(aes(x = phonemes, y = skew_scores)) + 
+  geom_boxplot()
+```
+
+![](index_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
+
+---
+
+# Tidy Data: CoG ~ Skewness for the [s] segments
+
+
+```r
+my_data_tidy_row_id_number &lt;- my_data_tidy %&gt;%
+  mutate(row_number = row_number()) %&gt;%
+  relocate(row_number)
+
+my_data_tidy_segment_s &lt;- my_data_tidy_row_id_number %&gt;%
+  slice(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39)
+
+my_data_tidy_s_final &lt;- my_data_tidy_segment_s %&gt;%
+  select(obs, phonemes, cog_scores, skew_scores)
+```
+---
+
+# Tidy Data: Table 
+
+```r
+knitr::kable(my_data_tidy_s_final)
+```
+
+
+
+| obs|phonemes | cog_scores| skew_scores|
+|---:|:--------|----------:|-----------:|
+|   1|s        |   3285.300|  -1.2152771|
+|   2|s        |   4664.371|  -1.1854471|
+|   3|s        |   4679.532|  -1.0676233|
+|   4|s        |   4873.546|  -1.0610645|
+|   5|s        |   4878.759|  -1.0342092|
+|   6|s        |   5194.612|  -0.9485275|
+|   7|s        |   5455.066|  -0.9086766|
+|   8|s        |   5483.810|  -0.8775833|
+|   9|s        |   5683.643|  -0.8672691|
+|  10|s        |   5829.508|  -0.8593212|
+|  11|s        |   5889.843|  -0.7006081|
+|  12|s        |   5987.429|  -0.6923963|
+|  13|s        |   6075.781|  -0.6806629|
+|  14|s        |   6093.901|  -0.6251679|
+|  15|s        |   6238.325|  -0.6205981|
+|  16|s        |   6321.221|  -0.5760628|
+|  17|s        |   6443.836|  -0.5510135|
+|  18|s        |   6624.931|  -0.5116123|
+|  19|s        |   7011.781|  -0.3184417|
+|  20|s        |   7095.281|  -0.1268600|
+---
+
+# Model: CoG ~ Skewness for the [s] segments 
+
+```r
+mod_cog_skew_s &lt;- lm(formula = cog_scores ~ skew_scores, data = my_data_tidy_s_final)
+
+summary(mod_cog_skew_s)
+```
+
+```
+## 
+## Call:
+## lm(formula = cog_scores ~ skew_scores, data = my_data_tidy_s_final)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1060.74   -21.72    58.96   123.00   405.24 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)   8027.2      212.3   37.80  &lt; 2e-16 ***
+## skew_scores   3029.1      259.1   11.69 7.69e-10 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 320.1 on 18 degrees of freedom
+## Multiple R-squared:  0.8836,	Adjusted R-squared:  0.8771 
+## F-statistic: 136.6 on 1 and 18 DF,  p-value: 7.691e-10
+```
+
+```r
+lm(formula = cog_scores ~ skew_scores, data = my_data_tidy_s_final)
+```
+
+```
+## 
+## Call:
+## lm(formula = cog_scores ~ skew_scores, data = my_data_tidy_s_final)
+## 
+## Coefficients:
+## (Intercept)  skew_scores  
+##        8027         3029
+```
+---
+
+# Table of Model Summary
+
+
+```r
+tidy(mod_cog_skew_s) %&gt;%
+  knitr::kable()
+```
+
+
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) | 8027.238|  212.3339|  37.80479|       0|
+|skew_scores | 3029.103|  259.1380|  11.68915|       0|
+
+---
+
+# Scatter Plot: CoG ~ Skewness for the [s] segments
+
+
+```r
+my_data_tidy_s_final %&gt;%
+  ggplot() + 
+  aes(x = cog_scores, y = skew_scores) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+![](index_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+---
+
+# Checking Model Diagnosis
+
+
+```r
+residuals_mean &lt;- my_data_tidy_s_final %&gt;%
+  select(cog_scores, skew_scores)
+
+mean(residuals(residuals_mean))
+```
+
+```
+## Warning: Unknown or uninitialised column: `na.action`.
+```
+
+```
+## Warning: Unknown or uninitialised column: `residuals`.
+```
+
+```
+## Warning in mean.default(residuals(residuals_mean)): argument is not numeric or
+## logical: returning NA
+```
+
+```
+## [1] NA
+```
+
+```r
+mean(residuals(my_data_tidy_s_final))
+```
+
+```
+## Warning: Unknown or uninitialised column: `na.action`.
+```
+
+```
+## Warning: Unknown or uninitialised column: `residuals`.
+```
+
+```
+## Warning in mean.default(residuals(my_data_tidy_s_final)): argument is not
+## numeric or logical: returning NA
+```
+
+```
+## [1] NA
+```
+
+```r
+stat_summary(residuals(residuals_mean))
+```
+
+```
+## Warning: Unknown or uninitialised column: `na.action`.
+```
+
+```
+## Warning: Unknown or uninitialised column: `residuals`.
+```
+
+```
+## geom_pointrange: na.rm = FALSE, orientation = NA
+## stat_summary: fun.data = NULL, fun = NULL, fun.max = NULL, fun.min = NULL, fun.args = list(), na.rm = FALSE, orientation = NA
+## position_identity
+```
+
+```r
+view(residuals_mean)
+
+summary(residuals(my_data_tidy_s_final))
+```
+
+```
+## Warning: Unknown or uninitialised column: `na.action`.
+## Unknown or uninitialised column: `residuals`.
+```
+
+```
+## Length  Class   Mode 
+##      0   NULL   NULL
+```
+
+---
+# Checking Model Diagnosis
+
+```r
+plot(mod_cog_skew_s)
+```
+
+![](index_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;![](index_files/figure-html/unnamed-chunk-13-2.png)&lt;!-- --&gt;![](index_files/figure-html/unnamed-chunk-13-3.png)&lt;!-- --&gt;![](index_files/figure-html/unnamed-chunk-13-4.png)&lt;!-- --&gt;
+---
+# Checking Model Diagnosis
+
+```r
+durbinWatsonTest(mod_cog_skew_s)
+```
+
+```
+##  lag Autocorrelation D-W Statistic p-value
+##    1     -0.03770938      1.302818     0.1
+##  Alternative hypothesis: rho != 0
+```
+---
+# Reporting: Statistical Analysis and Results
+
+Data from the fricative dataset were analyzed using a generalized linear model. The model included center of gravity as our dependent variable and skewness as our predictor for the [s] segments. We did not transform our data since after making the scatter plot we could see that the linear regression fits the observed values. In fact, based on the R-squared value (0.8836), we can state that the line predicts 88.36% of the observed values. Moreover, the p-value (7.691e-10) shows that there is a strong correlation between the two variables. Visual inspection of Q-Q plots and plots of residuals against fitted values showed no discernible deviations from normality or homoskedasticity. We also performed a Durbin-Watson Test in order to determine whether there is correlation between the residuals. From the output, we can see that the test statistic is 1.302818 and the corresponding p-value is 0.05. Since this p-value is 0.05, we can conclude that the residuals in this regression model are not autocorrelated.
+
+---
+# Loading Assumptions Dataset
+
+
+```r
+library(readr)
+assumptions &lt;- read_csv("data_raw/assumptions.csv")
+```
+
+```
+## Rows: 142 Columns: 2
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: ","
+## dbl (2): x, y
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+```
+
+```r
+View(assumptions)
+```
+---
+
+# Scatter Plot: Assumptions
+
+
+```r
+assumptions %&gt;%
+  ggplot() +
+  aes(x = x, y = y) +
+  geom_point()
+```
+
+![](index_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
+
+---
+
+# Scatter Plot: Assumptions
+
+It would not be appropriate to fit a model to this data because some of the pairs of variables we plot do not have a linear relationship between them. In this case, fitting a model really does not make sense since the relationship between x and y is definitely not linear. 
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

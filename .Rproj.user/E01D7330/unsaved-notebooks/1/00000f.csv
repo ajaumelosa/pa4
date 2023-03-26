@@ -1,0 +1,6 @@
+"2","(*) NOTE: I saw chunk options "", 'setup', message=FALSE""
+ please go to https://yihui.org/knitr/options
+ (it is likely that you forgot to quote ""character"" options)
+"
+"0","View(my_data_tidy)"
+"0","View(fricatives)"
