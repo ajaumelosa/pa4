@@ -1,0 +1,4 @@
+"0",""
+"0","my_data_tidy %>%"
+"0","  group_by(., phonemes) %>%"
+"0","  summarize(., mean_skew_scores = mean(skew_scores), sd_skew_scores = sd(skew_scores))"

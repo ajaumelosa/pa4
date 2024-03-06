@@ -1,0 +1,5 @@
+"0","assumptions <- read_csv(""data_raw/assumptions.csv"")
+"
+"2","Error in read_csv(""data_raw/assumptions.csv"") : 
+  could not find function ""read_csv""
+"
